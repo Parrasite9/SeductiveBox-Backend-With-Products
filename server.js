@@ -6,15 +6,17 @@ const { Sequelize } = require('sequelize');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // Ensure this line is present and correct
 
 const productRoutes = require('./routes/products');
 const userRoutes = require('./routes/users');
 const subscriptionRoutes = require('./routes/subscriptions');
+const purchaseRoutes = require('./routes/purchases');
 
 app.use('/products', productRoutes);
 app.use('/users', userRoutes);
 app.use('/subscriptions', subscriptionRoutes);
+app.use('/purchases', purchaseRoutes);
 
 app.get('/', (req, res) => {
   res.send('Hello World!');
