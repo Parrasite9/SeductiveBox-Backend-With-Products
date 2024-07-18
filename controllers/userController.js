@@ -24,8 +24,8 @@ exports.getUserById = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
-  const { name, email, addressLine1, addressLine2, city, state, zip, country, creditCardNumber, creditCardExp, creditCardCVV, username, password } = req.body;
-  if (!name || !email || !username || !password) {
+  const { name, email, addressLine1, addressLine2, city, state, zip, country, creditCardNumber, creditCardExp, creditCardCVV, password } = req.body;
+  if (!name || !email || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
@@ -43,7 +43,6 @@ exports.createUser = async (req, res) => {
       creditCardNumber,
       creditCardExp,
       creditCardCVV,
-      username,
       password: hashedPassword
     });
     res.status(201).json(user);
@@ -84,20 +83,20 @@ exports.deleteUser = async (req, res) => {
 };
 
 exports.loginUser = async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password) {
+  const { email, password } = req.body;
+  if (!email || !password) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
   try {
-    const user = await User.findOne({ where: { username } });
+    const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(400).json({ error: 'Invalid username or password' });
+      return res.status(400).json({ error: 'Invalid email or password' });
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
-      return res.status(400).json({ error: 'Invalid username or password' });
+      return res.status(400).json({ error: 'Invalid email or password' });
     }
 
     res.status(200).json({ message: 'Login successful', user });

@@ -1,10 +1,11 @@
 'use strict';
-const bcrypt = require('bcrypt');
 const { Model } = require('sequelize');
+const bcrypt = require('bcrypt');
 
 module.exports = (sequelize, DataTypes) => {
   class User extends Model {
     static associate(models) {
+      // define association here
       User.hasMany(models.Purchase, { foreignKey: 'userId' });
     }
   }
@@ -20,29 +21,17 @@ module.exports = (sequelize, DataTypes) => {
     creditCardNumber: DataTypes.STRING,
     creditCardExp: DataTypes.STRING,
     creditCardCVV: DataTypes.STRING,
-    username: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true
-    },
     password: {
       type: DataTypes.STRING,
       allowNull: false,
       validate: {
-        isLongEnough(value) {
-          if (value.length < 8) {
-            throw new Error('Password must be at least 8 characters long');
-          }
+        len: {
+          args: [8],
+          msg: 'Password must be at least 8 characters long'
         },
-        hasUpperCase(value) {
-          if (!/[A-Z]/.test(value)) {
-            throw new Error('Password must contain at least one capital letter');
-          }
-        },
-        hasNumber(value) {
-          if (!/[0-9]/.test(value)) {
-            throw new Error('Password must contain at least one number');
-          }
+        is: {
+          args: /^(?=.*[A-Z])(?=.*\d)/,
+          msg: 'Password must contain at least one capital letter and one number'
         }
       }
     }
@@ -50,15 +39,9 @@ module.exports = (sequelize, DataTypes) => {
     sequelize,
     modelName: 'User',
     hooks: {
-      beforeCreate: async (user) => {
-        if (user.password) {
-          user.password = await bcrypt.hash(user.password, 10);
-        }
-      },
-      beforeUpdate: async (user) => {
-        if (user.password) {
-          user.password = await bcrypt.hash(user.password, 10);
-        }
+      beforeCreate: async (user, options) => {
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(user.password, salt);
       }
     }
   });
