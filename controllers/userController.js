@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const { User } = require('../models');
 
 exports.getAllUsers = async (req, res) => {
@@ -23,8 +24,28 @@ exports.getUserById = async (req, res) => {
 };
 
 exports.createUser = async (req, res) => {
+  const { name, email, addressLine1, addressLine2, city, state, zip, country, creditCardNumber, creditCardExp, creditCardCVV, username, password } = req.body;
+  if (!name || !email || !username || !password) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
   try {
-    const user = await User.create(req.body);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      name,
+      email,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      zip,
+      country,
+      creditCardNumber,
+      creditCardExp,
+      creditCardCVV,
+      username,
+      password: hashedPassword
+    });
     res.status(201).json(user);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -57,6 +78,29 @@ exports.deleteUser = async (req, res) => {
     } else {
       res.status(404).json({ error: 'User not found' });
     }
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.loginUser = async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+
+  try {
+    const user = await User.findOne({ where: { username } });
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid username or password' });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(400).json({ error: 'Invalid username or password' });
+    }
+
+    res.status(200).json({ message: 'Login successful', user });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
